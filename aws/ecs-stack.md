@@ -4,6 +4,8 @@
 TODO:
 
 * Config HTTPS for ELB
+* Pull image from private reposistory
+* Configure domain for application load balancer
 
 This document provide the manual steps to deploy a flask RESTful application to Amazon ECS Fargate
 
@@ -105,7 +107,7 @@ Question 1: Why dont we input the VPC?
       * DB_USER_NAME: Database User name
       * FLASK_APP: The flask application variable environment.
       * FLASK_ENV: production
-      * PYTHONPATH: src/ This folder contain all modules in todo application. We define to help python find out our modules.
+      * PYTHONPATH: /app/src/ This folder contain all modules in todo application. We define to help python find out our modules.
     * Networking: Ignore it.
     * Storage and logging: Leave everything as default.
     * Storage and logging: Leave everything as default
@@ -121,22 +123,24 @@ Question 1: Why dont we input the VPC?
             HTTP (80)           TCP (6)         80              0.0.0.0/0
             Custom TCP Rule TCP (6)             5000            {Pick flask-todo-elb-sg to allow only connection from elb}
 
+    We only allow connection from flask-todo-elb-sg security group to our service. We already assign our load balancer to flask-todo-elb-sg that means the application load balancer can connect to our services.
+
 ### 2. Create service
 
     Name: flask-todo-service
 
-### 3. Configure service
+#### 1. Configure service
 
-    TBD
+![DNS](https://raw.githubusercontent.com/TranHoang/flask-helloworld-devops/master/aws/images/ecs-configure-service.png)
 
-### 4. Configure network
+#### 2. Configure network
 
-    TBD
+    Security group: flask-todo-ecs-sg
 
-### 5. Set auto scaling
+    ![DNS](https://raw.githubusercontent.com/TranHoang/flask-helloworld-devops/master/aws/images/ecs-service-configure-network.png)
 
-    TBD
+#### 3. Set auto scaling
 
-### 5. Set auto scaling
+    Use default. I will update the autoscaling configuration.
 
-    TBD
+We are all set. Please go the application load balancer to get the public domain name then try to access our api.
