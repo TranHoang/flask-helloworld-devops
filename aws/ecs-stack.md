@@ -82,7 +82,14 @@ Question 1: Why dont we input the VPC?
     * Task execution role: ecsTaskExecutionRole
     * Task memory: The total memory of running containers in this task. My container is small then I pick 0.5 GB (the smallest memory in the dropdown.)
     * Task CPU: 0.25 vCPU
+
 * Create container
+  * ![DNS](https://raw.githubusercontent.com/TranHoang/flask-helloworld-devops/master/aws/images/ecs-container-1.png)
+
+  * ![DNS](https://raw.githubusercontent.com/TranHoang/flask-helloworld-devops/master/aws/images/ecs-container-2.png)
+
+  * ![DNS](https://raw.githubusercontent.com/TranHoang/flask-helloworld-devops/master/aws/images/ecs-container-3.png)
+
   * Container Name: {your container name}
   * Image: {Link to our docker image reposistory}. TODO: Update private image security.
   * Memory limit - Hard limit: 500 MB. If we defined this value and the container attempts to exceed the hard limit, the container is killed. This field is optional with ECS Fargate.
@@ -92,26 +99,25 @@ Question 1: Why dont we input the VPC?
         The open port on our container. My flask application use port 5000 then I input port 5000 here.
 
   * Advanced container configuration
-  * HealCheck: Ignore it. We can config in ELB - Application load balancer.
-  * Environment
-    * CPU Units: The number of cpu units to reserve for the container. The total CPU Units for all containers in a task must be less than the CPU Units we define in the Task CPU above.
-    * Essentials: True. We are creating the only one flask application container on this task then we mark this container is True to stop the task if this container is failure.
-    * Entry point: The command to start our flask application. I use bin/flask-run.sh
-    * Command: Leave it blank because we already define the entry point. Please check out this link to understand entry point, command and their best practice recommendation. [Link](https://medium.freecodecamp.org/docker-entrypoint-cmd-dockerfile-best-practices-abc591c30e21)
-    * Working directory
-      * The default working directory in the container. Leave it blank if we would like to use the default directory defined in in the Dockerfile.
-    * Env Variables The environment variables such as: Database login credential, other configs:
-      * DB_HOST: Database Host Name
-      * DB_NAME: Database Name
-      * DB_PWD: Database Password
-      * DB_USER_NAME: Database User name
-      * FLASK_APP: The flask application variable environment.
-      * FLASK_ENV: production
-      * PYTHONPATH: /app/src/ This folder contain all modules in todo application. We define to help python find out our modules.
-    * Networking: Ignore it.
-    * Storage and logging: Leave everything as default.
-    * Storage and logging: Leave everything as default
-    * Resource limits and Docker Label: Ignore it.
+    * HealCheck: Ignore it. We can config in ELB - Application load balancer.
+    * Environment
+      * CPU Units: The number of cpu units to reserve for the container. The total CPU Units for all containers in a task must be less than the CPU Units we define in the Task CPU above.
+      * Essentials: True. We are creating the only one flask application container on this task then we mark this container is True to stop the task if this container is failure.
+      * Entry point: The command to start our flask application. I use bin/flask-run.sh
+      * Command: Leave it blank because we already define the entry point. Please check out this link to understand entry point, command and their best practice recommendation. [Link](https://medium.freecodecamp.org/docker-entrypoint-cmd-dockerfile-best-practices-abc591c30e21)
+      * Working directory
+        * The default working directory in the container. Leave it blank if we would like to use the default directory defined in the the Dockerfile.
+      * Env Variables The environment variables such as: Database login credential, other configs:
+        * DB_HOST: Database Host Name
+        * DB_NAME: Database Name
+        * DB_PWD: Database Password
+        * DB_USER_NAME: Database User name
+        * FLASK_APP: The flask application variable environment.
+        * FLASK_ENV: production
+        * PYTHONPATH: /app/src/ This folder contain all modules in todo application. We define to help python find out our modules.
+      * Networking: Ignore it.
+      * Storage and logging: Leave everything as default.
+      * Resource limits and Docker Label: Ignore it.
 
 ## IV.Create service to run the above task
 
