@@ -1,13 +1,13 @@
-
 # Amazon Elastic Container Service Fargate
 
 TODO:
 
-* Config HTTPS for ELB
-* Pull image from private reposistory
-* Configure domain for application load balancer
+* Config HTTPS for ELB.
+* Pull image from private reposistory.
+* Configure domain for application load balancer.
+* Setup auto scaling.
 
-This document provide the manual steps to deploy a flask RESTful application to Amazon ECS Fargate
+This document provide the manual steps to deploy a flask RESTful application to Amazon ECS Fargate.
 
 ![DNS](https://raw.githubusercontent.com/TranHoang/flask-helloworld-devops/master/aws/images/amazon-ecs-fargate.jpg)
 
@@ -15,21 +15,98 @@ This document provide the manual steps to deploy a flask RESTful application to 
 
 ### Amazon ELB
 
+Elastic Load Balancing automatically distributes incoming application traffic across multiple targets, such as Amazon EC2 instances, containers, and IP addresses. It can handle the varying load of your application traffic in a single Availability Zone or across multiple Availability Zones. In this demostration we will use Application Load Balancer to distributes incoming application traffic to multiple Todo API containers within a single Availability Zone.
+
+This [link](https://aws.amazon.com/elasticloadbalancing/) provide more details
+
 ### ECS Service
 
 Amazon ECS allows you to run and maintain a specified number of instances of a task definition simultaneously in an Amazon ECS cluster. This is called a service. If any of your tasks should fail or stop for any reason, the Amazon ECS service scheduler launches another instance of your task definition to replace it and maintain the desired count of tasks in the service depending on the scheduling strategy used.
 
-### ECS Task
+This [link](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html) provide more details
 
 ### VPC
+
+Amazon Virtual Private Cloud is a virtual networking environment consist ELB, our application, services, etc... We can config the VPC to allow the ELB facing to the internet, or place the backend sytems in a private-facing subnet with no Internet access.
+This [link](https://aws.amazon.com/vpc/) provide more details
 
 ### Security group
 
 A security group is a set of firewall rules that control the traffic for any amazon services (ELB, Cluster, Service, Amazon RDS) that it ties to. For example, when create an amazon elastic load balancer
 
-# We will create all the items in the above diagram
+This [link](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html) provide more details
 
-## I. Create Amazon ELB
+## We will create all the items in the above diagram
+
+In this demostration, our todo API will run insidie a the default VPC in N.Virginia region (us-east-1).
+
+We are going the create: Amazon ELB, ECS Cluster, Amazon RDS - PostgreSQL, Cluster service and Task. All of these services will run into a default VPC, and we will assign a security group for each of these service to help these service can communicate with each others more secure. Suppose we use security group on Amazon RDS to help the PostgreSQL database only accept connection from the Cluster service.
+In this demo we create the following security groups:
+
+| Security Group     |      Amazon services           |
+|------------------  |:------------------------------:|
+| flask-todo-elb-sg  | ELB - Elastic Load Balancer    |
+| flask-todo-db-sg   | Amazon RDS - PostgeSQL         |
+| flask-todo-ecs-sg  | Service inside the ECS Cluster |
+
+I. [Security Group](#sg)
+
+II. [Amazon ELB](#elb)
+
+III. [ECS Cluster](#ecs)
+
+IV. [Amazon RDS - PostgreSQL](#rds)
+
+V. [Task](#task)
+
+VI. [Service](#service)
+
+## I. <a name="sg"></a>Security group
+
+1. flask-todo-elb-sg: Security group for Elastic Load Balancer
+* Group name: flask-todo-elb-sg
+* Description: A security group for ELB
+* VPC: Select default VPC
+* Inbound Rules
+  | Type     |  Protocol  |  Port Range  |  Source  |
+  |--------- |:----------:|:------------:|----------|
+  | HTTP (80)| TCP (6)    | 80           |0.0.0.0/0 |
+* Outbound Rules
+  | Type        |  Protocol  |  Port Range  |  Destination  |
+  |-------------|:----------:|:------------:|---------------|
+  | All traffic | All        | All          |   0.0.0.0/0   |
+
+2. flask-todo-ecs-sg: Security group for ECS Cluster service
+* Group name: flask-todo-ecs-sg
+* Description: Security group for ECS Service in fargate
+* VPC: Select default VPC
+* Inbound Rules
+  | Type            |  Protocol  |  Port Range  |  Source               |
+  |-----------------|:----------:|:------------:|-----------------------|
+  | Custom TCP Rule | TCP (6)    | 5000         |Pick flask-todo-elb-sg |
+
+  Select source = flask-todo-elb-sg to allow only connection from ELB to ECS Cluster service on port 5000.
+* Outbound Rules
+  | Type        |  Protocol  |  Port Range  |  Destination  |
+  |-------------|:----------:|:------------:|---------------|
+  | All traffic | All        | All          |   0.0.0.0/0   |
+
+3. flask-todo-db-sg: Security group for Amazon RDS - PostgeSQL
+* Group name: flask-todo-db-sg
+* Description: Security group for Database
+* VPC: Select default VPC
+* Inbound Rules
+  | Type              |  Protocol  |  Port Range  |  Source               |
+  |-------------------|:----------:|:------------:|-----------------------|
+  | PostgreSQL (5432) | TCP (6)    | 5432         |Pick flask-todo-ecs-sg |
+
+  Select source = flask-todo-ecs-sg to allow only connection from ECS Cluster service to the DB on port 5432.
+* Outbound Rules
+  | Type        |  Protocol  |  Port Range  |  Destination  |
+  |-------------|:----------:|:------------:|---------------|
+  | All traffic | All        | All          |   0.0.0.0/0   |
+
+## II. <a name="elb"></a>Amazon ELB
 
 ### 1. Create an Application Load Balance
 
@@ -64,14 +141,41 @@ Ingore this steps we will register services tie to this ELB when creating servic
 
 Click Review then Create button to create the ELB - Application Load Balancer.
 
-## II. Create ECS Cluster
+## III. <a name="ecs"></a>ECS Cluster
 
 [ECS CLuster](https://console.aws.amazon.com/ecs/home?region=us-east-1#/clusters)
 
 Create a cluster powered by Fargate. We just need to input the cluster name.
-Question 1: Why dont we input the VPC?
 
-## III. Create Task definition
+## IV. <a name="rds"></a>Amazon RDS - PostgreSQL
+
+Access this [link](https://console.aws.amazon.com/rds/home?region=us-east-1#) to start.
+
+* Create database
+  * Select engine:
+    * select PostgreSQL
+  * Choose use case
+    * Select Dev/Test. We dont need Production for this demo.
+  * Specific DB details
+    * Choose the DB engine version you want. I pick the latest one.
+    * DB instance class
+      * I pick the db.t2.micro
+      * Dont need Multi-AZ
+    * Settings
+      * DB instance identifier
+      * Master username and password
+  * Configure advanced settings
+    * Pick the default VPC
+    * Default for subnet group
+    * Public accessibility: No. Our database aren't facing to the internet.
+    * Select the VPC security group for our database. I pick the flask-todo-db-sg. We already config this security group to allow connection from flask-todo-ecs-sg so our todo API service can connect to this database.
+  * Database options:
+    * Input database name.
+    * Leave others config as default.
+
+  Click "Create databse"
+
+## V. <a name="task"></a>Create Task definition
 
 ![DNS](https://raw.githubusercontent.com/TranHoang/flask-helloworld-devops/master/aws/images/task-definition.png)
 
@@ -119,19 +223,9 @@ Question 1: Why dont we input the VPC?
       * Storage and logging: Leave everything as default.
       * Resource limits and Docker Label: Ignore it.
 
-## IV.Create service to run the above task
+## VI. <a name="service"></a>Create service to run the above task
 
-### 1. Create security group
-
-    Name: flask-todo-ecs-sg
-    InBound Rule:
-            Type                Protocol        Port Range      Source      Description
-            HTTP (80)           TCP (6)         80              0.0.0.0/0
-            Custom TCP Rule TCP (6)             5000            {Pick flask-todo-elb-sg to allow only connection from elb}
-
-    We only allow connection from flask-todo-elb-sg security group to our service. We already assign our load balancer to flask-todo-elb-sg that means the application load balancer can connect to our services.
-
-### 2. Create service
+### 1. Create service
 
     Name: flask-todo-service
 
