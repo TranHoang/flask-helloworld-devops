@@ -68,10 +68,12 @@ VI. [Service](#service)
 * Description: A security group for ELB
 * VPC: Select default VPC
 * Inbound Rules
+
   | Type     |  Protocol  |  Port Range  |  Source  |
   |--------- |:----------:|:------------:|----------|
   | HTTP (80)| TCP (6)    | 80           |0.0.0.0/0 |
 * Outbound Rules
+
   | Type        |  Protocol  |  Port Range  |  Destination  |
   |-------------|:----------:|:------------:|---------------|
   | All traffic | All        | All          |   0.0.0.0/0   |
@@ -81,12 +83,14 @@ VI. [Service](#service)
 * Description: Security group for ECS Service in fargate
 * VPC: Select default VPC
 * Inbound Rules
+
   | Type            |  Protocol  |  Port Range  |  Source               |
   |-----------------|:----------:|:------------:|-----------------------|
   | Custom TCP Rule | TCP (6)    | 5000         |Pick flask-todo-elb-sg |
 
   Select source = flask-todo-elb-sg to allow only connection from ELB to ECS Cluster service on port 5000.
 * Outbound Rules
+
   | Type        |  Protocol  |  Port Range  |  Destination  |
   |-------------|:----------:|:------------:|---------------|
   | All traffic | All        | All          |   0.0.0.0/0   |
@@ -96,12 +100,14 @@ VI. [Service](#service)
 * Description: Security group for Database
 * VPC: Select default VPC
 * Inbound Rules
+
   | Type              |  Protocol  |  Port Range  |  Source               |
   |-------------------|:----------:|:------------:|-----------------------|
   | PostgreSQL (5432) | TCP (6)    | 5432         |Pick flask-todo-ecs-sg |
 
   Select source = flask-todo-ecs-sg to allow only connection from ECS Cluster service to the DB on port 5432.
 * Outbound Rules
+
   | Type        |  Protocol  |  Port Range  |  Destination  |
   |-------------|:----------:|:------------:|---------------|
   | All traffic | All        | All          |   0.0.0.0/0   |
