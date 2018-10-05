@@ -241,12 +241,12 @@ Access this [link](https://console.aws.amazon.com/rds/home?region=us-east-1#) to
 
 #### 2. Configure network
 
-    Security group: flask-todo-ecs-sg
+Security group: flask-todo-ecs-sg
 
-    ![DNS](https://raw.githubusercontent.com/TranHoang/flask-helloworld-devops/master/aws/images/ecs-service-configure-network.png)
+![DNS](https://raw.githubusercontent.com/TranHoang/flask-helloworld-devops/master/aws/images/ecs-service-configure-network.png)
 
 #### 3. Set auto scaling
 
-    Use default. I will update the autoscaling configuration.
+Use default. I will update the autoscaling configuration.
 
 We are all set. Please go the application load balancer to get the public domain name then try to access our api.
