@@ -1,0 +1,28 @@
+{
+    "family": "flask-todo",
+    "requiresCompatibilities": [
+      "FARGATE"
+    ],
+    "networkMode": "awsvpc",
+    "cpu": "256",
+    "memory": "512",
+    "containerDefinitions": [
+      {
+        "name": "flask-todo",
+        "image": "tranhoangnguyen/flask-todo:latest",
+        "cpu": 256,
+        "memory": 500,
+        "memoryReservation": 300,  
+        "portMappings": [
+          {
+            "containerPort": 5000,
+            "protocol": "tcp"
+          }
+        ],
+        "command": [
+          "bin/flask-run.sh"
+        ],
+        "essential": true
+      }
+    ]
+}
